@@ -41,18 +41,16 @@ impl SecretKey {
 
     /// Copy-free reference cast
     ///
+    /// There is no guarantee the provided bytes will fit the field.
+    ///
     /// # Safety
     ///
-    /// This function will not panic if the length of the slice is smaller than
-    /// `Self::LEN`. Instead, it will cause undefined behavior and read random
-    /// disowned bytes.
-    ///
-    /// There is no guarantee the provided bytes will fit the field.
+    /// Inputs smaller than `Self::LEN` will cause undefined behavior.
     pub unsafe fn as_ref_unchecked(bytes: &[u8]) -> &Self {
         // The interpreter will frequently make references to keys and values using
         // logically checked slices.
         //
-        // This function will save unnecessary copy to owned slices for the interpreter
+        // This function will avoid unnecessary copy to owned slices for the interpreter
         // access
         &*(bytes.as_ptr() as *const Self)
     }
