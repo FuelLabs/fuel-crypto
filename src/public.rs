@@ -5,7 +5,7 @@ use fuel_types::{Bytes32, Bytes64};
 use core::fmt;
 use core::ops::Deref;
 
-/// Signature secret key
+/// Signature public key
 ///
 /// The compression scheme is described in
 /// <https://github.com/lazyledger/lazyledger-specs/blob/master/specs/data_structures.md#public-key-cryptography>
