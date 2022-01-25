@@ -10,6 +10,7 @@ use core::ops::Deref;
 /// The compression scheme is described in
 /// <https://github.com/lazyledger/lazyledger-specs/blob/master/specs/data_structures.md#public-key-cryptography>
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 // TODO serde implementation blocked by https://github.com/FuelLabs/fuel-types/issues/13
 pub struct PublicKey(Bytes64);
 

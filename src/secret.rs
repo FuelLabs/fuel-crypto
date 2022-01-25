@@ -9,6 +9,7 @@ use core::ops::Deref;
     feature = "serde-types-minimal",
     derive(serde::Serialize, serde::Deserialize)
 )]
+#[repr(transparent)]
 pub struct SecretKey(Bytes32);
 
 impl SecretKey {
