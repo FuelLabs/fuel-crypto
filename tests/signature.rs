@@ -31,7 +31,7 @@ fn ecrecover_corrupted_signature() {
 
     (0..Signature::LEN).for_each(|i| {
         (0..7).fold(1u8, |m, _| {
-            let mut s = signature.clone();
+            let mut s = signature;
 
             s[i] ^= m;
 
@@ -78,7 +78,7 @@ fn ecrecover_unchecked_corrupted_signature() {
 
     (0..Signature::LEN).for_each(|i| {
         (0..7).fold(1u8, |m, _| {
-            let mut s = signature.clone();
+            let mut s = signature;
 
             s[i] ^= m;
 
