@@ -261,7 +261,7 @@ mod use_std {
             secret
                 .is_in_field()
                 .then(|| secret)
-                .ok_or_else(|| Secp256k1Error::InvalidSecretKey.into())
+                .ok_or(Error::InvalidSecretKey)
         }
     }
 

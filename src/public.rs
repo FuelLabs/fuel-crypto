@@ -241,7 +241,7 @@ mod use_std {
             public
                 .is_in_curve()
                 .then(|| public)
-                .ok_or_else(|| Secp256k1Error::InvalidPublicKey.into())
+                .ok_or(Error::InvalidPublicKey)
         }
     }
 
