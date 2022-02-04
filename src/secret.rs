@@ -3,7 +3,7 @@ use fuel_types::Bytes32;
 use core::fmt;
 use core::ops::Deref;
 
-/// Symmetric secret key
+/// Asymmetric secret key
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(
     feature = "serde-types-minimal",
