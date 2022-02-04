@@ -1,37 +1,53 @@
-use fuel_crypto::{Message, PublicKey, SecretKey, Signature};
+use fuel_crypto::{Error, Message, PublicKey, SecretKey, Signature};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
 #[test]
-fn sign() {
+fn recover() {
     let rng = &mut StdRng::seed_from_u64(8586);
 
-    let message = b"Writing is good, thinking is better. Cleverness is good, patience is better.";
-    let message = Message::new(message);
+    let message =
+        b"A beast can never be as cruel as a human being, so artistically, so picturesquely cruel.";
 
-    let secret = SecretKey::random(rng);
-    let public = secret.public_key();
+    for _ in 0..100 {
+        let message = Message::new(message);
 
-    let signature = secret.sign(&message);
+        let secret = SecretKey::random(rng);
+        let public = secret.public_key();
 
-    signature
-        .verify(&public, &message)
-        .expect("Failed to verify signature");
+        let signature = secret.sign(&message);
+        let recover = signature.recover(&message).expect("Failed to recover PK");
 
-    let signature = secret.sign_recoverable(&message);
-    let signature = Signature::from(signature);
-
-    signature
-        .verify(&public, &message)
-        .expect("Failed to verify signature");
+        assert_eq!(public, recover);
+    }
 }
 
 #[test]
-fn sign_corrupted() {
+fn verify() {
     let rng = &mut StdRng::seed_from_u64(8586);
 
     let message =
         b"Music expresses that which cannot be put into words and that which cannot remain silent.";
+
+    for _ in 0..100 {
+        let message = Message::new(message);
+
+        let secret = SecretKey::random(rng);
+        let public = secret.public_key();
+
+        let signature = secret.sign(&message);
+
+        signature
+            .verify(&public, &message)
+            .expect("Failed to verify signature");
+    }
+}
+
+#[test]
+fn corrupted_signature() {
+    let rng = &mut StdRng::seed_from_u64(8586);
+
+    let message = b"When life itself seems lunatic, who knows where madness lies?";
     let message = Message::new(message);
 
     let secret = SecretKey::random(rng);
@@ -39,27 +55,46 @@ fn sign_corrupted() {
 
     let signature = secret.sign(&message);
 
+    // Tamper, bit by bit, the signature and public key.
+    //
+    // The recover and verify operations should fail in all cases.
     (0..Signature::LEN).for_each(|i| {
         (0..7).fold(1u8, |m, _| {
             let mut s = signature;
 
             s.as_mut()[i] ^= m;
 
-            assert!(s.verify(&public, &message).is_err());
+            match s.recover(&message) {
+                Ok(pk) => assert_ne!(public, pk),
+                Err(Error::InvalidSignature) => (),
+                Err(e) => panic!("Unexpected error: {}", e),
+            }
 
             m << 1
         });
-    });
 
-    (0..PublicKey::LEN).for_each(|i| {
-        (0..7).fold(1u8, |m, _| {
-            let mut p = public;
+        (0..Signature::LEN).for_each(|i| {
+            (0..7).fold(1u8, |m, _| {
+                let mut s = signature;
 
-            p.as_mut()[i] ^= m;
+                s.as_mut()[i] ^= m;
 
-            assert!(signature.verify(&p, &message).is_err());
+                assert!(s.verify(&public, &message).is_err());
 
-            m << 1
+                m << 1
+            });
+        });
+
+        (0..PublicKey::LEN).for_each(|i| {
+            (0..7).fold(1u8, |m, _| {
+                let mut p = public;
+
+                p.as_mut()[i] ^= m;
+
+                assert!(signature.verify(&p, &message).is_err());
+
+                m << 1
+            });
         });
     });
 }

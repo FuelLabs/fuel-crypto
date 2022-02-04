@@ -103,7 +103,7 @@ impl fmt::Display for SecretKey {
 #[cfg(feature = "std")]
 mod use_std {
     use super::*;
-    use crate::{Error, Message, PublicKey, RecoverableSignature, Signature};
+    use crate::{Error, Message, PublicKey, Signature};
 
     use secp256k1::{Error as Secp256k1Error, Secp256k1, SecretKey as Secp256k1SecretKey};
 
@@ -120,47 +120,21 @@ mod use_std {
         /// Sign a given message and compress the `v` to the signature
         ///
         /// The compression scheme is described in
-        /// <https://github.com/lazyledger/lazyledger-specs/blob/master/specs/data_structures.md#public-key-cryptography>
-        pub fn sign_recoverable(&self, message: &Message) -> RecoverableSignature {
+        /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
+        pub fn sign(&self, message: &Message) -> Signature {
             let secret = self.borrow();
             let message = message.to_secp();
 
             let signature = Secp256k1::signing_only().sign_recoverable(&message, secret);
 
-            RecoverableSignature::from_secp(signature)
+            Signature::from_secp(signature)
         }
 
         /// Sign a given message and compress the `v` to the signature
         ///
         /// The compression scheme is described in
-        /// <https://github.com/lazyledger/lazyledger-specs/blob/master/specs/data_structures.md#public-key-cryptography>
-        /// # Safety
         ///
-        /// The protocol expects the message to be the result of a hash -
-        /// otherwise, its verification is malleable. The output of the
-        /// hash must be 32 bytes.
-        pub unsafe fn sign_recoverable_unchecked<M>(&self, message: M) -> RecoverableSignature
-        where
-            M: AsRef<[u8]>,
-        {
-            let message = Message::as_ref_unchecked(message.as_ref());
-
-            self.sign_recoverable(message)
-        }
-
-        /// Sign a given message
-        pub fn sign(&self, message: &Message) -> Signature {
-            let secret = self.borrow();
-            let message = message.to_secp();
-
-            let signature = Secp256k1::signing_only().sign(&message, secret);
-            let signature = signature.serialize_compact();
-
-            // Safety: the security of this call reflects the security of secp256k1 FFI
-            unsafe { Signature::from_bytes_unchecked(signature) }
-        }
-
-        /// Sign a given message
+        /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
         ///
         /// # Safety
         ///

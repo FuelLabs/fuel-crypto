@@ -32,8 +32,3 @@ std = ["fuel-types/default", "secp256k1"]
 name = "test-signature"
 path = "tests/signature.rs"
 required-features = ["std"]
-
-[[test]]
-name = "test-recover"
-path = "tests/recover.rs"
-required-features = ["std"]

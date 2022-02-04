@@ -106,22 +106,33 @@ macro_rules! signature {
     };
 }
 
-signature!(RecoverableSignature);
 signature!(Signature);
+
+impl Signature {
+    /// Use a single bit to encode the recovery id
+    ///
+    /// The compression scheme is described in
+    ///
+    /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
+    pub(crate) fn truncate_recovery_id(&mut self) {
+        self.as_mut()[32] &= 0x7f;
+    }
+}
 
 #[cfg(feature = "std")]
 mod use_std {
-    use crate::{Error, Message, PublicKey, RecoverableSignature, Signature};
+    use crate::{Error, Message, PublicKey, Signature};
 
     use secp256k1::recovery::{RecoverableSignature as SecpRecoverableSignature, RecoveryId};
     use secp256k1::{Secp256k1, Signature as Secp256k1Signature};
 
-    impl RecoverableSignature {
+    impl Signature {
         // Internal API - this isn't meant to be made public because some assumptions and pre-checks
         // are performed prior to this call
-        fn to_secp(&mut self) -> SecpRecoverableSignature {
-            let v = ((self.as_mut()[32] & 0x90) >> 7) as i32;
-            self.as_mut()[32] &= 0x7f;
+        pub(crate) fn to_secp(&mut self) -> SecpRecoverableSignature {
+            let v = (self.as_mut()[32] >> 7) as i32;
+
+            self.truncate_recovery_id();
 
             let v = RecoveryId::from_i32(v)
                 .unwrap_or_else(|_| RecoveryId::from_i32(0).expect("0 is infallible recovery ID"));
@@ -139,40 +150,13 @@ mod use_std {
             let (v, mut signature) = signature.serialize_compact();
 
             let v = v.to_i32();
+
             signature[32] |= (v << 7) as u8;
 
             // Safety: the security of this call reflects the security of secp256k1 FFI
-            unsafe { RecoverableSignature::from_bytes_unchecked(signature) }
-        }
-    }
-
-    impl From<RecoverableSignature> for Signature {
-        fn from(mut signature: RecoverableSignature) -> Signature {
-            use secp256k1::ffi::{self, CPtr, Signature as Secp256k1FFISignature};
-
-            let signature = signature.to_secp();
-
-            // Safety: FFI init
-            let mut ret = unsafe { Secp256k1FFISignature::new() };
-
-            // Safety: FFI call
-            unsafe {
-                ffi::recovery::secp256k1_ecdsa_recoverable_signature_convert(
-                    ffi::secp256k1_context_no_precomp,
-                    &mut ret,
-                    signature.as_c_ptr(),
-                )
-            };
-
-            let signature = Secp256k1Signature::from(ret);
-            let signature = signature.serialize_compact();
-
-            // Safety: transparent secp signature
             unsafe { Signature::from_bytes_unchecked(signature) }
         }
-    }
 
-    impl RecoverableSignature {
         /// Recover the public key from a signature performed with
         /// [`SecretKey::sign_recoverable`]
         pub fn recover(mut self, message: &Message) -> Result<PublicKey, Error> {
@@ -185,11 +169,11 @@ mod use_std {
 
             Ok(pk)
         }
-    }
 
-    impl Signature {
         /// Verify a signature produced by [`SecretKey::sign`]
-        pub fn verify(self, pk: &PublicKey, message: &Message) -> Result<(), Error> {
+        pub fn verify(mut self, pk: &PublicKey, message: &Message) -> Result<(), Error> {
+            self.truncate_recovery_id();
+
             let signature = Secp256k1Signature::from_compact(self.as_ref())?;
 
             let message = message.to_secp();

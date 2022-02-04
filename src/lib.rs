@@ -18,4 +18,4 @@ pub use hasher::Hasher;
 pub use message::Message;
 pub use public::PublicKey;
 pub use secret::SecretKey;
-pub use signature::{RecoverableSignature, Signature};
+pub use signature::Signature;
