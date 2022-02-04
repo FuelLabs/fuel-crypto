@@ -145,11 +145,8 @@ mod use_std {
             unsafe { Signature::from_bytes_unchecked(signature) }
         }
 
-        /// Use a single bit to encode the recovery id
-        ///
-        /// The compression scheme is described in
-        ///
-        /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
+        /// Truncate the recovery id from the signature, producing a valid `secp256k1`
+        /// representation.
         pub(crate) fn truncate_recovery_id(&mut self) {
             self.as_mut()[32] &= 0x7f;
         }
@@ -169,6 +166,10 @@ mod use_std {
 
         /// Recover the public key from a signature performed with
         /// [`Signature::sign`]
+        ///
+        /// It takes the signature as owned because this operation is not idempotent. The taken
+        /// signature will not be recoverable. Signatures are meant to be single use, so this
+        /// avoids unnecessary copy.
         pub fn recover(mut self, message: &Message) -> Result<PublicKey, Error> {
             let signature = self.to_secp();
             let message = message.to_secp();
@@ -181,6 +182,10 @@ mod use_std {
         }
 
         /// Verify a signature produced by [`Signature::sign`]
+        ///
+        /// It takes the signature as owned because this operation is not idempotent. The taken
+        /// signature will not be recoverable. Signatures are meant to be single use, so this
+        /// avoids unnecessary copy.
         pub fn verify(mut self, pk: &PublicKey, message: &Message) -> Result<(), Error> {
             self.truncate_recovery_id();
 
