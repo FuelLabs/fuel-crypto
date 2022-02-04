@@ -110,7 +110,7 @@ mod use_std {
     use crate::{Error, Message, PublicKey, SecretKey, Signature};
 
     use secp256k1::recovery::{RecoverableSignature as SecpRecoverableSignature, RecoveryId};
-    use secp256k1::{Secp256k1, Signature as Secp256k1Signature};
+    use secp256k1::Secp256k1;
 
     use std::borrow::Borrow;
 
@@ -186,17 +186,13 @@ mod use_std {
         /// It takes the signature as owned because this operation is not idempotent. The taken
         /// signature will not be recoverable. Signatures are meant to be single use, so this
         /// avoids unnecessary copy.
-        pub fn verify(mut self, pk: &PublicKey, message: &Message) -> Result<(), Error> {
-            self.truncate_recovery_id();
+        pub fn verify(self, pk: &PublicKey, message: &Message) -> Result<(), Error> {
+            // TODO evaluate if its worthy to use native verify
+            //
+            // https://github.com/FuelLabs/fuel-crypto/issues/4
 
-            let signature = Secp256k1Signature::from_compact(self.as_ref())?;
-
-            let message = message.to_secp();
-            let pk = pk.to_secp()?;
-
-            Secp256k1::verification_only().verify(&message, &signature, &pk)?;
-
-            Ok(())
+            self.recover(message)
+                .and_then(|pk_p| (pk == &pk_p).then(|| ()).ok_or(Error::InvalidSignature))
         }
     }
 }

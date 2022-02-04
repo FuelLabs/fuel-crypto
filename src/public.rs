@@ -176,7 +176,7 @@ mod use_std {
             unsafe { Self::from_slice_unchecked(pk) }
         }
 
-        pub(crate) fn to_secp(&self) -> Result<Secp256k1PublicKey, Error> {
+        pub(crate) fn _to_secp(&self) -> Result<Secp256k1PublicKey, Error> {
             let mut pk = [SECP_UNCOMPRESSED_FLAG; UNCOMPRESSED_PUBLIC_KEY_SIZE];
 
             debug_assert_eq!(SECP_UNCOMPRESSED_FLAG, pk[0]);
