@@ -5,7 +5,7 @@ use fuel_types::{Bytes32, Bytes64};
 use core::fmt;
 use core::ops::Deref;
 
-/// Symmetric public key
+/// Asymmetric public key
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 // TODO serde implementation blocked by https://github.com/FuelLabs/fuel-types/issues/13
