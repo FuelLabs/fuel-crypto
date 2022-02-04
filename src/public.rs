@@ -5,10 +5,7 @@ use fuel_types::{Bytes32, Bytes64};
 use core::fmt;
 use core::ops::Deref;
 
-/// Signature public key
-///
-/// The compression scheme is described in
-/// <https://github.com/lazyledger/lazyledger-specs/blob/master/specs/data_structures.md#public-key-cryptography>
+/// Symmetric public key
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 // TODO serde implementation blocked by https://github.com/FuelLabs/fuel-types/issues/13

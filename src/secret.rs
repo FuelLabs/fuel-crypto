@@ -3,7 +3,7 @@ use fuel_types::Bytes32;
 use core::fmt;
 use core::ops::Deref;
 
-/// Signature secret key
+/// Symmetric secret key
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(
     feature = "serde-types-minimal",
@@ -103,9 +103,9 @@ impl fmt::Display for SecretKey {
 #[cfg(feature = "std")]
 mod use_std {
     use super::*;
-    use crate::{Error, Message, PublicKey, Signature};
+    use crate::{Error, PublicKey};
 
-    use secp256k1::{Error as Secp256k1Error, Secp256k1, SecretKey as Secp256k1SecretKey};
+    use secp256k1::{Error as Secp256k1Error, SecretKey as Secp256k1SecretKey};
 
     use core::borrow::Borrow;
     use core::str;
@@ -117,39 +117,6 @@ mod use_std {
     };
 
     impl SecretKey {
-        /// Sign a given message and compress the `v` to the signature
-        ///
-        /// The compression scheme is described in
-        /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
-        pub fn sign(&self, message: &Message) -> Signature {
-            let secret = self.borrow();
-            let message = message.to_secp();
-
-            let signature = Secp256k1::signing_only().sign_recoverable(&message, secret);
-
-            Signature::from_secp(signature)
-        }
-
-        /// Sign a given message and compress the `v` to the signature
-        ///
-        /// The compression scheme is described in
-        ///
-        /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
-        ///
-        /// # Safety
-        ///
-        /// The protocol expects the message to be the result of a hash -
-        /// otherwise, its verification is malleable. The output of the
-        /// hash must be 32 bytes.
-        pub unsafe fn sign_unchecked<M>(&self, message: M) -> Signature
-        where
-            M: AsRef<[u8]>,
-        {
-            let message = Message::as_ref_unchecked(message.as_ref());
-
-            self.sign(message)
-        }
-
         /// Create a new random secret
         #[cfg(feature = "random")]
         pub fn random<R>(rng: &mut R) -> Self

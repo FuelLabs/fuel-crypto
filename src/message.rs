@@ -30,8 +30,8 @@ impl Message {
     ///
     /// # Safety
     ///
-    /// There is no guarantee the provided bytes will fit the field. The field
-    /// security can be checked with [`Message::is_in_field`].
+    /// There is no guarantee the provided bytes will be the product of a cryptographically secure
+    /// hash. Using insecure messages might compromise the security of the signature.
     pub unsafe fn from_bytes_unchecked(bytes: [u8; Self::LEN]) -> Self {
         Self(bytes.into())
     }
@@ -44,18 +44,18 @@ impl Message {
     /// `Self::LEN`. Instead, it will cause undefined behavior and read random
     /// disowned bytes.
     ///
-    /// There is no guarantee the provided bytes will fit the field.
+    /// This function extends the unsafety of [`Self::from_bytes_unchecked`].
     pub unsafe fn from_slice_unchecked(bytes: &[u8]) -> Self {
         Self(Bytes32::from_slice_unchecked(bytes))
     }
 
     /// Copy-free reference cast
     ///
-    /// There is no guarantee the provided bytes will fit the field.
-    ///
     /// # Safety
     ///
     /// Inputs smaller than `Self::LEN` will cause undefined behavior.
+    ///
+    /// This function extends the unsafety of [`Self::from_bytes_unchecked`].
     pub unsafe fn as_ref_unchecked(bytes: &[u8]) -> &Self {
         // The interpreter will frequently make references to keys and values using
         // logically checked slices.

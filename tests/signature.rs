@@ -15,7 +15,7 @@ fn recover() {
         let secret = SecretKey::random(rng);
         let public = secret.public_key();
 
-        let signature = secret.sign(&message);
+        let signature = Signature::sign(&secret, &message);
         let recover = signature.recover(&message).expect("Failed to recover PK");
 
         assert_eq!(public, recover);
@@ -35,7 +35,7 @@ fn verify() {
         let secret = SecretKey::random(rng);
         let public = secret.public_key();
 
-        let signature = secret.sign(&message);
+        let signature = Signature::sign(&secret, &message);
 
         signature
             .verify(&public, &message)
@@ -53,7 +53,7 @@ fn corrupted_signature() {
     let secret = SecretKey::random(rng);
     let public = secret.public_key();
 
-    let signature = secret.sign(&message);
+    let signature = Signature::sign(&secret, &message);
 
     // Tamper, bit by bit, the signature and public key.
     //
@@ -72,29 +72,29 @@ fn corrupted_signature() {
 
             m << 1
         });
+    });
 
-        (0..Signature::LEN).for_each(|i| {
-            (0..7).fold(1u8, |m, _| {
-                let mut s = signature;
+    (0..Signature::LEN).for_each(|i| {
+        (0..7).fold(1u8, |m, _| {
+            let mut s = signature;
 
-                s.as_mut()[i] ^= m;
+            s.as_mut()[i] ^= m;
 
-                assert!(s.verify(&public, &message).is_err());
+            assert!(s.verify(&public, &message).is_err());
 
-                m << 1
-            });
+            m << 1
         });
+    });
 
-        (0..PublicKey::LEN).for_each(|i| {
-            (0..7).fold(1u8, |m, _| {
-                let mut p = public;
+    (0..PublicKey::LEN).for_each(|i| {
+        (0..7).fold(1u8, |m, _| {
+            let mut p = public;
 
-                p.as_mut()[i] ^= m;
+            p.as_mut()[i] ^= m;
 
-                assert!(signature.verify(&p, &message).is_err());
+            assert!(signature.verify(&p, &message).is_err());
 
-                m << 1
-            });
+            m << 1
         });
     });
 }

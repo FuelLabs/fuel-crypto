@@ -58,6 +58,12 @@ jobs:
         command: build
         args: --verbose --target thumbv6m-none-eabi --no-default-features --features serde-types-minimal
 
+    - name: Build no-std random
+      uses: actions-rs/cargo@v1
+      with:
+        command: build
+        args: --verbose --target thumbv6m-none-eabi --no-default-features --features random
+
     - name: Run tests all features
       uses: actions-rs/cargo@v1
       with:
