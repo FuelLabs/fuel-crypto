@@ -62,13 +62,13 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --verbose --all-features
+        args: --verbose --all-features --release
 
     - name: Run tests serde
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --verbose --features serde-types
+        args: --verbose --features serde-types --release
 
     - name: Run tests no-std
       uses: actions-rs/cargo@v1
