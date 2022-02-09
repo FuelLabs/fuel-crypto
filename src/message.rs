@@ -112,7 +112,7 @@ impl fmt::Display for Message {
 
 #[cfg(feature = "std")]
 mod use_std {
-    use crate::{Hasher, Message};
+    use crate::Message;
 
     use secp256k1::Message as Secp256k1Message;
 
