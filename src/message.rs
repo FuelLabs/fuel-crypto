@@ -122,7 +122,7 @@ mod use_std {
             // 32 bytes. This validation exists to prevent users from signing
             // non-hashed messages, which is a severe violation of the protocol
             // security.
-            debug_assert_eq!(Hasher::OUTPUT_LEN, secp256k1::constants::MESSAGE_SIZE);
+            debug_assert_eq!(Self::LEN, secp256k1::constants::MESSAGE_SIZE);
             Secp256k1Message::from_slice(self.as_ref()).expect("Unreachable error")
         }
     }
