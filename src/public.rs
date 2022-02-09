@@ -173,7 +173,7 @@ mod use_std {
 
             debug_assert_eq!(SECP_UNCOMPRESSED_FLAG, pk[0]);
 
-            // Ignore the first byte of the compressed flag
+            // Ignore the first byte of the compression flag
             let pk = &pk[1..];
 
             // Safety: compile-time assertion of size correctness
