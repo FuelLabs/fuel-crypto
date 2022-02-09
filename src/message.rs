@@ -81,8 +81,8 @@ impl AsRef<[u8]> for Message {
 }
 
 impl From<Message> for [u8; Message::LEN] {
-    fn from(salt: Message) -> [u8; Message::LEN] {
-        salt.0.into()
+    fn from(message: Message) -> [u8; Message::LEN] {
+        message.0.into()
     }
 }
 
