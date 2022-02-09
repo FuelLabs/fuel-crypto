@@ -123,6 +123,10 @@ mod use_std {
     use core::str;
 
     const UNCOMPRESSED_PUBLIC_KEY_SIZE: usize = 65;
+
+    // Internal secp256k1 identifier for uncompressed point
+    //
+    // https://github.com/rust-bitcoin/rust-secp256k1/blob/ecb62612b57bf3aa8d8017d611d571f86bfdb5dd/secp256k1-sys/depend/secp256k1/include/secp256k1.h#L196
     const SECP_UNCOMPRESSED_FLAG: u8 = 4;
 
     impl PublicKey {
