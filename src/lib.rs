@@ -8,14 +8,22 @@
 
 mod error;
 mod hasher;
+mod keystore;
 mod message;
 mod public;
 mod secret;
 mod signature;
 
+#[cfg(feature = "std")]
+mod signer;
+
 pub use error::Error;
 pub use hasher::Hasher;
+pub use keystore::Keystore;
 pub use message::Message;
 pub use public::PublicKey;
 pub use secret::SecretKey;
 pub use signature::Signature;
+
+#[cfg(feature = "std")]
+pub use signer::Signer;
