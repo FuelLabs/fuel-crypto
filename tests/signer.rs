@@ -34,17 +34,14 @@ impl Keystore for TestKeystore {
             .get(id)
             .map(PublicKey::from)
             .map(Borrown::from)
-            .ok_or(io::Error::new(
-                io::ErrorKind::NotFound,
-                "The key was not found",
-            ))
+            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "The key was not found"))
     }
 
     fn secret(&self, id: usize) -> Result<Borrown<'_, SecretKey>, io::Error> {
-        self.keys.get(id).map(Borrown::from).ok_or(io::Error::new(
-            io::ErrorKind::NotFound,
-            "The key was not found",
-        ))
+        self.keys
+            .get(id)
+            .map(Borrown::from)
+            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "The key was not found"))
     }
 }
 
