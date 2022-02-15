@@ -6,6 +6,9 @@
 // https://rust-lang.github.io/api-guidelines/naming.html
 #![allow(clippy::wrong_self_convention)]
 
+/// Required export to implement [`Keystore`].
+pub use borrown;
+
 mod error;
 mod hasher;
 mod keystore;
