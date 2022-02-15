@@ -30,11 +30,9 @@ impl Keystore for TestKeystore {
     type KeyId = usize;
 
     fn public(&self, id: usize) -> Result<Borrown<'_, PublicKey>, io::Error> {
-        self.keys
-            .get(id)
-            .map(PublicKey::from)
+        self.secret(id)
+            .map(|secret| PublicKey::from(secret.as_ref()))
             .map(Borrown::from)
-            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "The key was not found"))
     }
 
     fn secret(&self, id: usize) -> Result<Borrown<'_, SecretKey>, io::Error> {
