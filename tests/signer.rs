@@ -35,14 +35,11 @@ impl Keystore for TestKeystore {
             .map(Borrown::from)
     }
 
-    fn public_identity_exists<P>(&self, public: P) -> Result<(), Self::Error>
-    where
-        P: AsRef<PublicKey>,
-    {
+    fn public_identity_exists(&self, public: &PublicKey) -> Result<(), Self::Error> {
         self.keys
             .iter()
             .map(PublicKey::from)
-            .any(|p| &p == public.as_ref())
+            .any(|p| &p == public)
             .then(|| ())
             .ok_or_else(|| {
                 io::Error::new(
@@ -88,11 +85,11 @@ fn signer() {
     let public_p = keystore.public(&key).expect("Failed to fetch PK");
 
     keystore
-        .public_identity_exists(public)
+        .public_identity_exists(public.as_ref())
         .expect("PK was inserted");
 
     keystore
-        .public_identity_exists(public_p)
+        .public_identity_exists(public_p.as_ref())
         .expect("PK was inserted");
 
     let signature = keystore.sign(&key, &message).expect("Failed to sign");
