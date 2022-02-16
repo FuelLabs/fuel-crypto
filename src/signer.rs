@@ -9,6 +9,15 @@ pub trait Signer {
     fn keystore(&self) -> &Self::Keystore;
 
     /// Sign a given message with the secret key identified by `id`
+    #[cfg(not(feature = "std"))]
+    fn sign(
+        &self,
+        id: <Self::Keystore as Keystore>::KeyId,
+        message: &Message,
+    ) -> Result<Signature, <Self::Keystore as Keystore>::Error>;
+
+    /// Sign a given message with the secret key identified by `id`
+    #[cfg(feature = "std")]
     fn sign(
         &self,
         id: <Self::Keystore as Keystore>::KeyId,
@@ -20,6 +29,16 @@ pub trait Signer {
     }
 
     /// Verify a given message with the public key identified by `id`
+    #[cfg(not(feature = "std"))]
+    fn verify(
+        &self,
+        id: <Self::Keystore as Keystore>::KeyId,
+        signature: Signature,
+        message: &Message,
+    ) -> Result<(), <Self::Keystore as Keystore>::Error>;
+
+    /// Verify a given message with the public key identified by `id`
+    #[cfg(feature = "std")]
     fn verify(
         &self,
         id: <Self::Keystore as Keystore>::KeyId,
