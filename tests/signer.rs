@@ -29,15 +29,15 @@ impl Keystore for TestKeystore {
     type Error = io::Error;
     type KeyId = usize;
 
-    fn public(&self, id: usize) -> Result<Borrown<'_, PublicKey>, io::Error> {
+    fn public(&self, id: &usize) -> Result<Borrown<'_, PublicKey>, io::Error> {
         self.secret(id)
             .map(|secret| PublicKey::from(secret.as_ref()))
             .map(Borrown::from)
     }
 
-    fn secret(&self, id: usize) -> Result<Borrown<'_, SecretKey>, io::Error> {
+    fn secret(&self, id: &usize) -> Result<Borrown<'_, SecretKey>, io::Error> {
         self.keys
-            .get(id)
+            .get(*id)
             .map(Borrown::from)
             .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "The key was not found"))
     }
@@ -65,24 +65,24 @@ fn signer() {
 
     assert_ne!(key, key_p);
 
-    let signature = keystore.sign(key, &message).expect("Failed to sign");
-    let signature_p = keystore.sign(key_p, &message).expect("Failed to sign");
+    let signature = keystore.sign(&key, &message).expect("Failed to sign");
+    let signature_p = keystore.sign(&key_p, &message).expect("Failed to sign");
 
     keystore
-        .verify(key, signature, &message)
+        .verify(&key, signature, &message)
         .expect("Failed to verify signature");
 
     keystore
-        .verify(key_p, signature_p, &message)
+        .verify(&key_p, signature_p, &message)
         .expect("Failed to verify signature");
 
     keystore
-        .verify(key_p, signature, &message)
+        .verify(&key_p, signature, &message)
         .err()
         .expect("Wrong key should fail verification");
 
     keystore
-        .verify(key, signature_p, &message)
+        .verify(&key, signature_p, &message)
         .err()
         .expect("Wrong key should fail verification");
 }

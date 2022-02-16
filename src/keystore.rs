@@ -11,8 +11,8 @@ pub trait Keystore {
     type KeyId;
 
     /// Public key for a given id
-    fn public(&self, id: Self::KeyId) -> Result<Borrown<'_, PublicKey>, Self::Error>;
+    fn public(&self, id: &Self::KeyId) -> Result<Borrown<'_, PublicKey>, Self::Error>;
 
     /// Secret key for a given id
-    fn secret(&self, id: Self::KeyId) -> Result<Borrown<'_, SecretKey>, Self::Error>;
+    fn secret(&self, id: &Self::KeyId) -> Result<Borrown<'_, SecretKey>, Self::Error>;
 }

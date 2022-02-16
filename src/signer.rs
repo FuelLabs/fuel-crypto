@@ -12,7 +12,7 @@ pub trait Signer {
     #[cfg(not(feature = "std"))]
     fn sign(
         &self,
-        id: <Self::Keystore as Keystore>::KeyId,
+        id: &<Self::Keystore as Keystore>::KeyId,
         message: &Message,
     ) -> Result<Signature, <Self::Keystore as Keystore>::Error>;
 
@@ -20,7 +20,7 @@ pub trait Signer {
     #[cfg(feature = "std")]
     fn sign(
         &self,
-        id: <Self::Keystore as Keystore>::KeyId,
+        id: &<Self::Keystore as Keystore>::KeyId,
         message: &Message,
     ) -> Result<Signature, <Self::Keystore as Keystore>::Error> {
         self.keystore()
@@ -32,7 +32,7 @@ pub trait Signer {
     #[cfg(not(feature = "std"))]
     fn verify(
         &self,
-        id: <Self::Keystore as Keystore>::KeyId,
+        id: &<Self::Keystore as Keystore>::KeyId,
         signature: Signature,
         message: &Message,
     ) -> Result<(), <Self::Keystore as Keystore>::Error>;
@@ -41,7 +41,7 @@ pub trait Signer {
     #[cfg(feature = "std")]
     fn verify(
         &self,
-        id: <Self::Keystore as Keystore>::KeyId,
+        id: &<Self::Keystore as Keystore>::KeyId,
         signature: Signature,
         message: &Message,
     ) -> Result<(), <Self::Keystore as Keystore>::Error> {
