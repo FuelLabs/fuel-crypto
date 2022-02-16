@@ -35,6 +35,23 @@ impl Keystore for TestKeystore {
             .map(Borrown::from)
     }
 
+    fn public_identity_exists<P>(&self, public: P) -> Result<(), Self::Error>
+    where
+        P: AsRef<PublicKey>,
+    {
+        self.keys
+            .iter()
+            .map(PublicKey::from)
+            .any(|p| &p == public.as_ref())
+            .then(|| ())
+            .ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "The provided public key wasn't found",
+                )
+            })
+    }
+
     fn secret(&self, id: &usize) -> Result<Borrown<'_, SecretKey>, io::Error> {
         self.keys
             .get(*id)
@@ -64,6 +81,17 @@ fn signer() {
     let key_p = keystore.generate_key(rng);
 
     assert_ne!(key, key_p);
+
+    let public = keystore.public(&key).expect("Failed to fetch PK");
+    let public_p = keystore.public(&key).expect("Failed to fetch PK");
+
+    keystore
+        .public_identity_exists(public)
+        .expect("PK was inserted");
+
+    keystore
+        .public_identity_exists(public_p)
+        .expect("PK was inserted");
 
     let signature = keystore.sign(&key, &message).expect("Failed to sign");
     let signature_p = keystore.sign(&key_p, &message).expect("Failed to sign");

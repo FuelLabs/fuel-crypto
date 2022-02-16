@@ -13,6 +13,11 @@ pub trait Keystore {
     /// Public key for a given id
     fn public(&self, id: &Self::KeyId) -> Result<Borrown<'_, PublicKey>, Self::Error>;
 
+    /// Return `()` if the provided key exists in the storage
+    fn public_identity_exists<P>(&self, public: P) -> Result<(), Self::Error>
+    where
+        P: AsRef<PublicKey>;
+
     /// Secret key for a given id
     fn secret(&self, id: &Self::KeyId) -> Result<Borrown<'_, SecretKey>, Self::Error>;
 }
