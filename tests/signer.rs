@@ -60,12 +60,14 @@ impl Keystore for TestKeystore {
     }
 }
 
-impl Signer for TestKeystore {
-    type Keystore = Self;
-
-    fn keystore(&self) -> &Self {
+impl AsRef<TestKeystore> for TestKeystore {
+    fn as_ref(&self) -> &Self {
         self
     }
+}
+
+impl Signer for TestKeystore {
+    type Keystore = Self;
 }
 
 #[test]

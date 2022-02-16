@@ -1,12 +1,14 @@
 use crate::{Keystore, Message, Signature};
 
 /// Signature provider based on a keystore
-pub trait Signer {
+pub trait Signer: AsRef<Self::Keystore> {
     /// Concrete keystore implementation
     type Keystore: Keystore;
 
     /// Accessor to the keystore
-    fn keystore(&self) -> &Self::Keystore;
+    fn keystore(&self) -> &Self::Keystore {
+        self.as_ref()
+    }
 
     /// Sign a given message with the secret key identified by `id`
     #[cfg(not(feature = "std"))]
