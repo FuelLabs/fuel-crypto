@@ -19,6 +19,9 @@ pub enum Error {
     /// Invalid secp256k1 signature
     InvalidSignature,
 
+    /// The provided key wasn't found
+    KeyNotFound,
+
     /// Out of preallocated memory
     NotEnoughMemory,
 }

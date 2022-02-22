@@ -1,4 +1,4 @@
-use crate::{Keystore, Message, Signature};
+use crate::{Error, Keystore, Message, Signature};
 
 /// Signature provider based on a keystore
 pub trait Signer: AsRef<Self::Keystore> {
@@ -27,6 +27,7 @@ pub trait Signer: AsRef<Self::Keystore> {
     ) -> Result<Signature, <Self::Keystore as Keystore>::Error> {
         self.keystore()
             .secret(id)
+            .and_then(|secret| secret.ok_or_else(|| Error::KeyNotFound.into()))
             .map(|secret| Signature::sign(secret.as_ref(), message))
     }
 
@@ -47,7 +48,10 @@ pub trait Signer: AsRef<Self::Keystore> {
         signature: Signature,
         message: &Message,
     ) -> Result<(), <Self::Keystore as Keystore>::Error> {
-        let public = self.keystore().public(id)?;
+        let public = self
+            .keystore()
+            .public(id)?
+            .ok_or_else(|| Error::KeyNotFound)?;
 
         signature
             .verify(public.as_ref(), message)

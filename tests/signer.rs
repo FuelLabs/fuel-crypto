@@ -1,5 +1,5 @@
 use fuel_crypto::borrown::Borrown;
-use fuel_crypto::{Keystore, Message, PublicKey, SecretKey, Signer};
+use fuel_crypto::{Error, Keystore, Message, PublicKey, SecretKey, Signer};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
@@ -29,31 +29,16 @@ impl Keystore for TestKeystore {
     type Error = io::Error;
     type KeyId = usize;
 
-    fn public(&self, id: &usize) -> Result<Borrown<'_, PublicKey>, io::Error> {
-        self.secret(id)
+    fn public(&self, id: &usize) -> Result<Option<Borrown<'_, PublicKey>>, io::Error> {
+        self.secret(id)?
+            .ok_or_else(|| Error::KeyNotFound.into())
             .map(|secret| PublicKey::from(secret.as_ref()))
             .map(Borrown::from)
+            .map(Some)
     }
 
-    fn public_identity_exists(&self, public: &PublicKey) -> Result<(), Self::Error> {
-        self.keys
-            .iter()
-            .map(PublicKey::from)
-            .any(|p| &p == public)
-            .then(|| ())
-            .ok_or_else(|| {
-                io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "The provided public key wasn't found",
-                )
-            })
-    }
-
-    fn secret(&self, id: &usize) -> Result<Borrown<'_, SecretKey>, io::Error> {
-        self.keys
-            .get(*id)
-            .map(Borrown::from)
-            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "The key was not found"))
+    fn secret(&self, id: &usize) -> Result<Option<Borrown<'_, SecretKey>>, io::Error> {
+        Ok(self.keys.get(*id).map(Borrown::from))
     }
 }
 
@@ -81,15 +66,14 @@ fn signer() {
 
     assert_ne!(key, key_p);
 
-    let public = keystore.public(&key).expect("Failed to fetch PK");
-    let public_p = keystore.public(&key).expect("Failed to fetch PK");
-
     keystore
-        .public_identity_exists(public.as_ref())
+        .public(&key)
+        .expect("Test keystore is infallible")
         .expect("PK was inserted");
 
     keystore
-        .public_identity_exists(public_p.as_ref())
+        .public(&key_p)
+        .expect("Test keystore is infallible")
         .expect("PK was inserted");
 
     let signature = keystore.sign(&key, &message).expect("Failed to sign");
