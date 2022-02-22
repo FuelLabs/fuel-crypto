@@ -48,10 +48,7 @@ pub trait Signer: AsRef<Self::Keystore> {
         signature: Signature,
         message: &Message,
     ) -> Result<(), <Self::Keystore as Keystore>::Error> {
-        let public = self
-            .keystore()
-            .public(id)?
-            .ok_or_else(|| Error::KeyNotFound)?;
+        let public = self.keystore().public(id)?.ok_or(Error::KeyNotFound)?;
 
         signature
             .verify(public.as_ref(), message)

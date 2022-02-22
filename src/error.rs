@@ -32,6 +32,12 @@ impl From<Error> for Infallible {
     }
 }
 
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Error {
+        unreachable!()
+    }
+}
+
 #[cfg(feature = "std")]
 mod use_std {
     use super::*;
