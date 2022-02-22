@@ -1,3 +1,5 @@
+use core::convert::Infallible;
+
 /// Crypto error variants
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(
@@ -19,6 +21,12 @@ pub enum Error {
 
     /// Out of preallocated memory
     NotEnoughMemory,
+}
+
+impl From<Error> for Infallible {
+    fn from(_: Error) -> Infallible {
+        unreachable!()
+    }
 }
 
 #[cfg(feature = "std")]
