@@ -1,5 +1,5 @@
 use fuel_crypto::borrown::Borrown;
-use fuel_crypto::{Error, Keystore, Message, PublicKey, SecretKey, Signer};
+use fuel_crypto::{Error, Keystore, Message, PublicKey, SecretKey, Signer, Verifier};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
@@ -49,7 +49,21 @@ impl AsRef<TestKeystore> for TestKeystore {
 }
 
 impl Signer for TestKeystore {
+    type Error = io::Error;
     type Keystore = Self;
+
+    fn keystore(&self) -> Result<&Self, Self::Error> {
+        Ok(&self)
+    }
+}
+
+impl Verifier for TestKeystore {
+    type Error = io::Error;
+    type Keystore = Self;
+
+    fn keystore(&self) -> Result<&Self, Self::Error> {
+        Ok(&self)
+    }
 }
 
 #[test]

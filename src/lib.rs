@@ -17,6 +17,7 @@ mod public;
 mod secret;
 mod signature;
 mod signer;
+mod verifier;
 
 pub use error::Error;
 pub use hasher::Hasher;
@@ -26,3 +27,4 @@ pub use public::PublicKey;
 pub use secret::SecretKey;
 pub use signature::Signature;
 pub use signer::Signer;
+pub use verifier::Verifier;

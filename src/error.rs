@@ -22,6 +22,9 @@ pub enum Error {
     /// The provided key wasn't found
     KeyNotFound,
 
+    /// The keystore isn't available or is corrupted
+    KeystoreNotAvailable,
+
     /// Out of preallocated memory
     NotEnoughMemory,
 }

@@ -1,7 +1,7 @@
 use crate::{Error, Keystore, Message, Signature};
 
-/// Signature provider based on a keystore
-pub trait Signer {
+/// Signature verifier based on a keystore
+pub trait Verifier {
     /// Keystore error implementation
     type Error: From<Error> + From<<Self::Keystore as Keystore>::Error>;
 
@@ -14,24 +14,26 @@ pub trait Signer {
     /// concurrent thread.
     fn keystore(&self) -> Result<&Self::Keystore, Self::Error>;
 
-    /// Sign a given message with the secret key identified by `id`
+    /// Verify a given message with the public key identified by `id`
     #[cfg(not(feature = "std"))]
-    fn sign(
+    fn verify(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
+        signature: Signature,
         message: &Message,
-    ) -> Result<Signature, Self::Error>;
+    ) -> Result<(), Self::Error>;
 
-    /// Sign a given message with the secret key identified by `id`
+    /// Verify a given message with the public key identified by `id`
     #[cfg(feature = "std")]
-    fn sign(
+    fn verify(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
+        signature: Signature,
         message: &Message,
-    ) -> Result<Signature, Self::Error> {
+    ) -> Result<(), Self::Error> {
         let keystore = self.keystore()?;
-        let secret = keystore.secret(id)?.ok_or_else(|| Error::KeyNotFound)?;
+        let public = keystore.public(id)?.ok_or_else(|| Error::KeyNotFound)?;
 
-        Ok(Signature::sign(secret.as_ref(), message))
+        Ok(signature.verify(public.as_ref(), message)?)
     }
 }
