@@ -51,7 +51,11 @@ pub trait Signer {
 
     /// Sign a given message with the provided key
     #[cfg(not(feature = "std"))]
-    fn sign_with_key(&self, secret: &SecretKey, message: &Message) -> Result<(), Self::Error>;
+    fn sign_with_key(
+        &self,
+        secret: &SecretKey,
+        message: &Message,
+    ) -> Result<Signature, Self::Error>;
 
     /// Sign a given message with the provided key
     #[cfg(feature = "std")]
