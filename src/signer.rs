@@ -22,7 +22,7 @@ pub trait Signer {
         id: &<Self::Keystore as Keystore>::KeyId,
     ) -> Result<Borrown<'_, SecretKey>, Self::Error> {
         let keystore = self.keystore()?;
-        let secret = keystore.secret(id)?.ok_or_else(|| Error::KeyNotFound)?;
+        let secret = keystore.secret(id)?.ok_or(Error::KeyNotFound)?;
 
         Ok(secret)
     }
@@ -33,7 +33,7 @@ pub trait Signer {
         id: &<Self::Keystore as Keystore>::KeyId,
     ) -> Result<Borrown<'_, PublicKey>, Self::Error> {
         let keystore = self.keystore()?;
-        let public = keystore.public(id)?.ok_or_else(|| Error::KeyNotFound)?;
+        let public = keystore.public(id)?.ok_or(Error::KeyNotFound)?;
 
         Ok(public)
     }

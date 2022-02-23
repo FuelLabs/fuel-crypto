@@ -53,7 +53,7 @@ impl Signer for TestKeystore {
     type Keystore = Self;
 
     fn keystore(&self) -> Result<&Self, Self::Error> {
-        Ok(&self)
+        Ok(self)
     }
 }
 
@@ -62,7 +62,7 @@ impl Verifier for TestKeystore {
     type Keystore = Self;
 
     fn keystore(&self) -> Result<&Self, Self::Error> {
-        Ok(&self)
+        Ok(self)
     }
 }
 
