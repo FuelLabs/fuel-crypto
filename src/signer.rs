@@ -1,4 +1,4 @@
-use crate::{Error, Keystore, Message, SecretKey, Signature, PublicKey};
+use crate::{Error, Keystore, Message, PublicKey, SecretKey, Signature};
 
 use borrown::Borrown;
 
@@ -17,7 +17,7 @@ pub trait Signer {
     fn keystore(&self) -> Result<&Self::Keystore, Self::Error>;
 
     /// Secret key indexed by `id`.
-    fn secret(
+    fn id_secret(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
     ) -> Result<Borrown<'_, SecretKey>, Self::Error> {
@@ -28,7 +28,7 @@ pub trait Signer {
     }
 
     /// Public key indexed by `id`.
-    fn public(
+    fn id_public(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
     ) -> Result<Borrown<'_, PublicKey>, Self::Error> {
@@ -39,22 +39,27 @@ pub trait Signer {
     }
 
     /// Sign a given message with the secret key identified by `id`
-    #[cfg(not(feature = "std"))]
-    fn sign(
-        &self,
-        id: &<Self::Keystore as Keystore>::KeyId,
-        message: &Message,
-    ) -> Result<Signature, Self::Error>;
-
-    /// Sign a given message with the secret key identified by `id`
-    #[cfg(feature = "std")]
     fn sign(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
         message: &Message,
     ) -> Result<Signature, Self::Error> {
-        let secret = self.secret(id)?;
+        let secret = self.id_secret(id)?;
 
-        Ok(Signature::sign(secret.as_ref(), message))
+        self.sign_with_key(secret.as_ref(), message)
+    }
+
+    /// Sign a given message with the provided key
+    #[cfg(not(feature = "std"))]
+    fn sign_with_key(&self, secret: &SecretKey, message: &Message) -> Result<(), Self::Error>;
+
+    /// Sign a given message with the provided key
+    #[cfg(feature = "std")]
+    fn sign_with_key(
+        &self,
+        secret: &SecretKey,
+        message: &Message,
+    ) -> Result<Signature, Self::Error> {
+        Ok(Signature::sign(secret, message))
     }
 }

@@ -17,7 +17,7 @@ pub trait Verifier {
     fn keystore(&self) -> Result<&Self::Keystore, Self::Error>;
 
     /// Secret key indexed by `id`.
-    fn secret(
+    fn id_secret(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
     ) -> Result<Borrown<'_, SecretKey>, Self::Error> {
@@ -28,7 +28,7 @@ pub trait Verifier {
     }
 
     /// Public key indexed by `id`.
-    fn public(
+    fn id_public(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
     ) -> Result<Borrown<'_, PublicKey>, Self::Error> {
@@ -39,24 +39,34 @@ pub trait Verifier {
     }
 
     /// Verify a given message with the public key identified by `id`
-    #[cfg(not(feature = "std"))]
-    fn verify(
-        &self,
-        id: &<Self::Keystore as Keystore>::KeyId,
-        signature: Signature,
-        message: &Message,
-    ) -> Result<(), Self::Error>;
-
-    /// Verify a given message with the public key identified by `id`
-    #[cfg(feature = "std")]
     fn verify(
         &self,
         id: &<Self::Keystore as Keystore>::KeyId,
         signature: Signature,
         message: &Message,
     ) -> Result<(), Self::Error> {
-        let public = self.public(id)?;
+        let public = self.id_public(id)?;
 
-        Ok(signature.verify(public.as_ref(), message)?)
+        self.verify_with_key(public.as_ref(), signature, message)
+    }
+
+    /// Verify a given message with the provided key
+    #[cfg(not(feature = "std"))]
+    fn verify_with_key(
+        &self,
+        public: &PublicKey,
+        signature: Signature,
+        message: &Message,
+    ) -> Result<(), Self::Error>;
+
+    /// Verify a given message with the provided key
+    #[cfg(feature = "std")]
+    fn verify_with_key(
+        &self,
+        public: &PublicKey,
+        signature: Signature,
+        message: &Message,
+    ) -> Result<(), Self::Error> {
+        Ok(signature.verify(public, message)?)
     }
 }
