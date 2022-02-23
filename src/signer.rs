@@ -1,4 +1,4 @@
-use crate::{Error, Keystore, Message, SecretKey, Signature};
+use crate::{Error, Keystore, Message, SecretKey, Signature, PublicKey};
 
 use borrown::Borrown;
 
@@ -25,6 +25,17 @@ pub trait Signer {
         let secret = keystore.secret(id)?.ok_or_else(|| Error::KeyNotFound)?;
 
         Ok(secret)
+    }
+
+    /// Public key indexed by `id`.
+    fn public(
+        &self,
+        id: &<Self::Keystore as Keystore>::KeyId,
+    ) -> Result<Borrown<'_, PublicKey>, Self::Error> {
+        let keystore = self.keystore()?;
+        let public = keystore.public(id)?.ok_or_else(|| Error::KeyNotFound)?;
+
+        Ok(public)
     }
 
     /// Sign a given message with the secret key identified by `id`

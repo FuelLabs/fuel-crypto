@@ -1,4 +1,4 @@
-use crate::{Error, Keystore, Message, PublicKey, Signature};
+use crate::{Error, Keystore, Message, PublicKey, SecretKey, Signature};
 
 use borrown::Borrown;
 
@@ -15,6 +15,17 @@ pub trait Verifier {
     /// Might fail if the keystore is in a corrupt state, not initialized or locked by a
     /// concurrent thread.
     fn keystore(&self) -> Result<&Self::Keystore, Self::Error>;
+
+    /// Secret key indexed by `id`.
+    fn secret(
+        &self,
+        id: &<Self::Keystore as Keystore>::KeyId,
+    ) -> Result<Borrown<'_, SecretKey>, Self::Error> {
+        let keystore = self.keystore()?;
+        let secret = keystore.secret(id)?.ok_or_else(|| Error::KeyNotFound)?;
+
+        Ok(secret)
+    }
 
     /// Public key indexed by `id`.
     fn public(
