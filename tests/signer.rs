@@ -1,5 +1,5 @@
 use fuel_crypto::borrown::Borrown;
-use fuel_crypto::{Error, Keystore, Message, PublicKey, SecretKey, Signer, Verifier};
+use fuel_crypto::{Keystore, Message, SecretKey, Signer};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 
@@ -29,14 +29,6 @@ impl Keystore for TestKeystore {
     type Error = io::Error;
     type KeyId = usize;
 
-    fn public(&self, id: &usize) -> Result<Option<Borrown<'_, PublicKey>>, io::Error> {
-        self.secret(id)?
-            .ok_or_else(|| Error::KeyNotFound.into())
-            .map(|secret| PublicKey::from(secret.as_ref()))
-            .map(Borrown::from)
-            .map(Some)
-    }
-
     fn secret(&self, id: &usize) -> Result<Option<Borrown<'_, SecretKey>>, io::Error> {
         Ok(self.keys.get(*id).map(Borrown::from))
     }
@@ -49,15 +41,6 @@ impl AsRef<TestKeystore> for TestKeystore {
 }
 
 impl Signer for TestKeystore {
-    type Error = io::Error;
-    type Keystore = Self;
-
-    fn keystore(&self) -> Result<&Self, Self::Error> {
-        Ok(self)
-    }
-}
-
-impl Verifier for TestKeystore {
     type Error = io::Error;
     type Keystore = Self;
 
@@ -93,21 +76,31 @@ fn signer() {
     let signature = keystore.sign(&key, &message).expect("Failed to sign");
     let signature_p = keystore.sign(&key_p, &message).expect("Failed to sign");
 
-    keystore
-        .verify(&key, signature, &message)
+    let public = keystore
+        .public(&key)
+        .expect("Failed to access keystore")
+        .expect("Key not found");
+
+    let public_p = keystore
+        .public(&key_p)
+        .expect("Failed to access keystore")
+        .expect("Key not found");
+
+    signature
+        .verify(public.as_ref(), &message)
         .expect("Failed to verify signature");
 
-    keystore
-        .verify(&key_p, signature_p, &message)
+    signature_p
+        .verify(public_p.as_ref(), &message)
         .expect("Failed to verify signature");
 
-    keystore
-        .verify(&key_p, signature, &message)
+    signature
+        .verify(public_p.as_ref(), &message)
         .err()
         .expect("Wrong key should fail verification");
 
-    keystore
-        .verify(&key, signature_p, &message)
+    signature_p
+        .verify(public.as_ref(), &message)
         .err()
         .expect("Wrong key should fail verification");
 }
