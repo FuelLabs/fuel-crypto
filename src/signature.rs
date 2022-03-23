@@ -2,6 +2,9 @@ use fuel_types::Bytes64;
 
 use core::fmt;
 use core::ops::Deref;
+use std::str::FromStr;
+
+use crate::Error;
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -102,6 +105,19 @@ impl fmt::Debug for Signature {
 impl fmt::Display for Signature {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl FromStr for Signature {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let trimmed = s.strip_prefix("0x").unwrap_or(s);
+        let bytes = hex::decode(trimmed).map_err(|_| Error::InvalidSignature)?;
+        if bytes.len() != Bytes64::LEN {
+            return Err(Error::InvalidSignature);
+        }
+        Ok(Self(unsafe { Bytes64::from_slice_unchecked(&bytes) }))
     }
 }
 
