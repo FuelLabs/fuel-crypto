@@ -1,8 +1,7 @@
 use fuel_types::Bytes64;
 
-use core::fmt;
 use core::ops::Deref;
-use std::str::FromStr;
+use core::{fmt, str::FromStr};
 
 use crate::Error;
 
@@ -108,16 +107,24 @@ impl fmt::Display for Signature {
     }
 }
 
+impl From<Bytes64> for Signature {
+    fn from(b: Bytes64) -> Self {
+        Self(b)
+    }
+}
+
+impl From<Signature> for Bytes64 {
+    fn from(s: Signature) -> Self {
+        s.0
+    }
+}
+
 impl FromStr for Signature {
     type Err = Error;
-
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let trimmed = s.strip_prefix("0x").unwrap_or(s);
-        let bytes = hex::decode(trimmed).map_err(|_| Error::InvalidSignature)?;
-        if bytes.len() != Bytes64::LEN {
-            return Err(Error::InvalidSignature);
-        }
-        Ok(Self(unsafe { Bytes64::from_slice_unchecked(&bytes) }))
+        Bytes64::from_str(s)
+            .map_err(|_| Error::InvalidSignature)
+            .map(|s| s.into())
     }
 }
 
