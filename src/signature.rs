@@ -1,9 +1,9 @@
+use crate::Error;
+
 use fuel_types::Bytes64;
 
 use core::ops::Deref;
-use core::{fmt, str::FromStr};
-
-use crate::Error;
+use core::{fmt, str};
 
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -119,7 +119,7 @@ impl From<Signature> for Bytes64 {
     }
 }
 
-impl FromStr for Signature {
+impl str::FromStr for Signature {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Bytes64::from_str(s)
