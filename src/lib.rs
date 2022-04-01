@@ -1,6 +1,7 @@
 //! Fuel cryptographic primitives.
 
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 // Wrong clippy convention; check
 // https://rust-lang.github.io/api-guidelines/naming.html
