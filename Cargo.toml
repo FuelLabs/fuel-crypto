@@ -15,6 +15,8 @@ borrown = "0.1"
 fuel-types = { version = "0.3", default-features = false }
 lazy_static = { version = "1.4", optional = true }
 rand = { version = "0.8", default-features = false, features = ["std_rng"], optional = true }
+# `rand-std` is used to further protect the blinders from side-channel attacks and won't compromise
+# the deterministic arguments of the signature (key, nonce, message), as defined in the RFC-6979
 secp256k1 = { version = "0.20", features = [ "rand-std", "recovery" ], optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 sha2 = { version = "0.9", default-features = false }
