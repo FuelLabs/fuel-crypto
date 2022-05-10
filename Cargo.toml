@@ -33,7 +33,7 @@ sha2 = "0.9"
 default = ["fuel-types/default", "std"]
 random = ["fuel-types/random", "rand"]
 serde = ["dep:serde", "fuel-types/serde"]
-std = ["fuel-types/std", "lazy_static", "secp256k1", "serde/default"]
+std = ["fuel-types/std", "lazy_static", "secp256k1", "serde?/default"]
 
 [[test]]
 name = "test-serde"
