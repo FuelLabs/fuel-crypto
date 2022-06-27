@@ -17,10 +17,11 @@ lazy_static = { version = "1.4", optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 sha2 = { version = "0.9", default-features = false }
 
+# WASM support requires a different set of default features
+# (e.g. `secp256k1/rand` instead of `secp256k1/rand-std`, and `rand/std_rng` to be disabled)
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-# the deterministic arguments of the signature (key, nonce, message), as defined in the RFC-6979
-rand = { version = "0.8", default-features = false, features = ["alloc"], optional = true }
-secp256k1 = { version = "0.20", default-features = false, features = [ "alloc", "rand", "recovery" ], optional = true }
+rand = { version = "0.8", default-features = false, optional = true }
+secp256k1 = { version = "0.20", default-features = false, features = [ "rand", "recovery" ], optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 rand = { version = "0.8", default-features = false, features = ["std_rng"], optional = true }
@@ -32,7 +33,7 @@ secp256k1 = { version = "0.20", features = [ "rand-std", "recovery" ], optional 
 bincode = { version = "1.3", default-features = false }
 criterion = "0.3"
 fuel-crypto = { path = ".", default-features = false, features = ["random"] }
-k256 = { version = "0.10", default-features = false, features = [ "ecdsa" ] }
+k256 = { version = "0.10", features = ["ecdsa"] }
 rand = { version = "0.8", default-features = false, features = ["std_rng"] }
 sha2 = "0.9"
 
@@ -40,7 +41,8 @@ sha2 = "0.9"
 default = ["fuel-types/default", "std"]
 random = ["fuel-types/random", "rand"]
 serde = ["dep:serde", "fuel-types/serde"]
-std = ["fuel-types/std", "lazy_static", "secp256k1", "serde?/default"]
+alloc = ["rand/alloc", "secp256k1/alloc"]
+std = ["alloc", "fuel-types/std", "lazy_static", "secp256k1", "serde?/default"]
 
 [[test]]
 name = "test-serde"
