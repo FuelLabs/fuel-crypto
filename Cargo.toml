@@ -38,6 +38,11 @@ serde = ["dep:serde", "fuel-types/serde"]
 std = ["fuel-types/std", "lazy_static", "secp256k1", "serde?/default", "coins-bip32", "coins-bip39"]
 
 [[test]]
+name = "test-mnemonic"
+path = "tests/mnemonic.rs"
+required-features = ["std"]
+
+[[test]]
 name = "test-serde"
 path = "tests/serde.rs"
 required-features = ["serde", "std"]
@@ -50,11 +55,6 @@ required-features = ["std"]
 [[test]]
 name = "test-signer"
 path = "tests/signer.rs"
-required-features = ["std"]
-
-[[test]]
-name = "test-mnemonic"
-path = "tests/mnemonic.rs"
 required-features = ["std"]
 
 [[bench]]
