@@ -14,20 +14,10 @@ description = "Fuel cryptographic primitives."
 borrown = "0.1"
 fuel-types = { version = "0.5", default-features = false }
 lazy_static = { version = "1.4", optional = true }
+rand = { version = "0.8", default-features = false, optional = true }
+secp256k1 = { version = "0.20", default-features = false, features = ["recovery"], optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 sha2 = { version = "0.9", default-features = false }
-
-# WASM support requires a different set of default features
-# (e.g. `secp256k1/rand` instead of `secp256k1/rand-std`, and `rand/std_rng` to be disabled)
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-rand = { version = "0.8", default-features = false, optional = true }
-secp256k1 = { version = "0.20", default-features = false, features = [ "rand", "recovery" ], optional = true }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-rand = { version = "0.8", default-features = false, features = ["std_rng"], optional = true }
-# `rand-std` is used to further protect the blinders from side-channel attacks and won't compromise
-# the deterministic arguments of the signature (key, nonce, message), as defined in the RFC-6979
-secp256k1 = { version = "0.20", features = [ "rand-std", "recovery" ], optional = true }
 
 [dev-dependencies]
 bincode = { version = "1.3", default-features = false }
@@ -39,10 +29,11 @@ sha2 = "0.9"
 
 [features]
 default = ["fuel-types/default", "std"]
+alloc = ["rand/alloc", "secp256k1/alloc"]
 random = ["fuel-types/random", "rand"]
 serde = ["dep:serde", "fuel-types/serde"]
-alloc = ["rand/alloc", "secp256k1/alloc"]
-std = ["alloc", "fuel-types/std", "lazy_static", "secp256k1", "serde?/default"]
+std = ["alloc", "fuel-types/std", "lazy_static", "secp256k1/rand-std", "serde?/default"]
+wasm = ["secp256k1/rand"]
 
 [[test]]
 name = "test-serde"
