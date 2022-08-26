@@ -2,9 +2,7 @@ use crate::Error;
 
 use fuel_types::Bytes64;
 
-use core::ops::Deref;
-use core::{fmt, str};
-
+use core::{fmt, ops::Deref, str};
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
@@ -55,6 +53,106 @@ impl Signature {
         // This function will avoid unnecessary copy to owned slices for the interpreter
         // access
         &*(bytes.as_ptr() as *const Self)
+    }
+}
+
+#[cfg(feature = "alloc")]
+mod use_alloc {
+    use super::*;
+    use crate::{Message, PublicKey, SecretKey};
+
+    use secp256k1::{
+        ecdsa::{RecoverableSignature as SecpRecoverableSignature, RecoveryId},
+        Secp256k1,
+    };
+
+    use core::borrow::Borrow;
+
+    lazy_static::lazy_static! {
+        static ref SIGNING_SECP: Secp256k1<secp256k1::SignOnly> = Secp256k1::signing_only();
+        static ref RECOVER_SECP: Secp256k1<secp256k1::All> = Secp256k1::new();
+    }
+
+    impl Signature {
+        /// Truncate the recovery id from the signature, producing a valid `secp256k1`
+        /// representation.
+        pub(crate) fn truncate_recovery_id(&mut self) {
+            self.as_mut()[32] &= 0x7f;
+        }
+
+        // Internal API - this isn't meant to be made public because some assumptions and pre-checks
+        // are performed prior to this call
+        pub(crate) fn to_secp(&mut self) -> SecpRecoverableSignature {
+            let v = (self.as_mut()[32] >> 7) as i32;
+
+            self.truncate_recovery_id();
+
+            let v = RecoveryId::from_i32(v)
+                .unwrap_or_else(|_| RecoveryId::from_i32(0).expect("0 is infallible recovery ID"));
+
+            let signature = SecpRecoverableSignature::from_compact(self.as_ref(), v)
+                .unwrap_or_else(|_| {
+                    SecpRecoverableSignature::from_compact(&[0u8; 64], v)
+                        .expect("Zeroed signature is infallible")
+                });
+
+            signature
+        }
+
+        pub(crate) fn from_secp(signature: SecpRecoverableSignature) -> Self {
+            let (v, mut signature) = signature.serialize_compact();
+
+            let v = v.to_i32();
+
+            signature[32] |= (v << 7) as u8;
+
+            // Safety: the security of this call reflects the security of secp256k1 FFI
+            unsafe { Signature::from_bytes_unchecked(signature) }
+        }
+
+        /// Sign a given message and compress the `v` to the signature
+        ///
+        /// The compression scheme is described in
+        /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
+        pub fn sign(secret: &SecretKey, message: &Message) -> Self {
+            let secret = secret.borrow();
+            let message = message.to_secp();
+
+            let signature = SIGNING_SECP.sign_ecdsa_recoverable(&message, secret);
+
+            Signature::from_secp(signature)
+        }
+
+        /// Recover the public key from a signature performed with
+        /// [`Signature::sign`]
+        ///
+        /// It takes the signature as owned because this operation is not idempotent. The taken
+        /// signature will not be recoverable. Signatures are meant to be single use, so this
+        /// avoids unnecessary copy.
+        pub fn recover(mut self, message: &Message) -> Result<PublicKey, Error> {
+            let signature = self.to_secp();
+            let message = message.to_secp();
+
+            let pk = RECOVER_SECP
+                .recover_ecdsa(&message, &signature)
+                .map(|pk| PublicKey::from_secp(&pk))?;
+
+            Ok(pk)
+        }
+
+        /// Verify a signature produced by [`Signature::sign`]
+        ///
+        /// It takes the signature as owned because this operation is not idempotent. The taken
+        /// signature will not be recoverable. Signatures are meant to be single use, so this
+        /// avoids unnecessary copy.
+        pub fn verify(self, pk: &PublicKey, message: &Message) -> Result<(), Error> {
+            // TODO evaluate if its worthy to use native verify
+            //
+            // https://github.com/FuelLabs/fuel-crypto/issues/4
+
+            self.recover(message)
+                .and_then(|pk_p| (pk == &pk_p).then(|| ()).ok_or(Error::InvalidSignature))
+        }
     }
 }
 
@@ -126,105 +224,5 @@ impl str::FromStr for Signature {
         Bytes64::from_str(s)
             .map_err(|_| Error::InvalidSignature)
             .map(|s| s.into())
-    }
-}
-
-#[cfg(feature = "std")]
-mod use_std {
-    use crate::{Error, Message, PublicKey, SecretKey, Signature};
-
-    use lazy_static::lazy_static;
-    use secp256k1::{
-        ecdsa::{RecoverableSignature as SecpRecoverableSignature, RecoveryId},
-        Secp256k1,
-    };
-
-    use std::borrow::Borrow;
-
-    lazy_static! {
-        static ref SIGNING_SECP: Secp256k1<secp256k1::SignOnly> = Secp256k1::signing_only();
-        static ref RECOVER_SECP: Secp256k1<secp256k1::All> = Secp256k1::new();
-    }
-
-    impl Signature {
-        // Internal API - this isn't meant to be made public because some assumptions and pre-checks
-        // are performed prior to this call
-        pub(crate) fn to_secp(&mut self) -> SecpRecoverableSignature {
-            let v = (self.as_mut()[32] >> 7) as i32;
-
-            self.truncate_recovery_id();
-
-            let v = RecoveryId::from_i32(v)
-                .unwrap_or_else(|_| RecoveryId::from_i32(0).expect("0 is infallible recovery ID"));
-
-            let signature = SecpRecoverableSignature::from_compact(self.as_ref(), v)
-                .unwrap_or_else(|_| {
-                    SecpRecoverableSignature::from_compact(&[0u8; 64], v)
-                        .expect("Zeroed signature is infallible")
-                });
-
-            signature
-        }
-
-        pub(crate) fn from_secp(signature: SecpRecoverableSignature) -> Self {
-            let (v, mut signature) = signature.serialize_compact();
-
-            let v = v.to_i32();
-
-            signature[32] |= (v << 7) as u8;
-
-            // Safety: the security of this call reflects the security of secp256k1 FFI
-            unsafe { Signature::from_bytes_unchecked(signature) }
-        }
-
-        /// Truncate the recovery id from the signature, producing a valid `secp256k1`
-        /// representation.
-        pub(crate) fn truncate_recovery_id(&mut self) {
-            self.as_mut()[32] &= 0x7f;
-        }
-
-        /// Sign a given message and compress the `v` to the signature
-        ///
-        /// The compression scheme is described in
-        /// <https://github.com/FuelLabs/fuel-specs/blob/master/specs/protocol/cryptographic_primitives.md#public-key-cryptography>
-        pub fn sign(secret: &SecretKey, message: &Message) -> Self {
-            let secret = secret.borrow();
-            let message = message.to_secp();
-
-            let signature = SIGNING_SECP.sign_ecdsa_recoverable(&message, secret);
-
-            Signature::from_secp(signature)
-        }
-
-        /// Recover the public key from a signature performed with
-        /// [`Signature::sign`]
-        ///
-        /// It takes the signature as owned because this operation is not idempotent. The taken
-        /// signature will not be recoverable. Signatures are meant to be single use, so this
-        /// avoids unnecessary copy.
-        pub fn recover(mut self, message: &Message) -> Result<PublicKey, Error> {
-            let signature = self.to_secp();
-            let message = message.to_secp();
-
-            let pk = RECOVER_SECP
-                .recover_ecdsa(&message, &signature)
-                .map(|pk| PublicKey::from_secp(&pk))?;
-
-            Ok(pk)
-        }
-
-        /// Verify a signature produced by [`Signature::sign`]
-        ///
-        /// It takes the signature as owned because this operation is not idempotent. The taken
-        /// signature will not be recoverable. Signatures are meant to be single use, so this
-        /// avoids unnecessary copy.
-        pub fn verify(self, pk: &PublicKey, message: &Message) -> Result<(), Error> {
-            // TODO evaluate if its worthy to use native verify
-            //
-            // https://github.com/FuelLabs/fuel-crypto/issues/4
-
-            self.recover(message)
-                .and_then(|pk_p| (pk == &pk_p).then(|| ()).ok_or(Error::InvalidSignature))
-        }
     }
 }
