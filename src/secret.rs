@@ -3,8 +3,10 @@ use fuel_types::Bytes32;
 use core::fmt;
 use core::ops::Deref;
 
+use zeroize::Zeroize;
+
 /// Asymmetric secret key
-#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Zeroize)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct SecretKey(Bytes32);
