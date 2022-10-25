@@ -17,8 +17,12 @@ pub use fuel_types;
 #[doc(no_inline)]
 /// Required export to use randomness features
 pub use rand;
+/// Required export for using mnemonic keygen on [`SecretKey::new_from_mnemonic`]
+#[cfg(feature = "std")]
 #[doc(no_inline)]
 pub use coins_bip39;
+/// Required export for using mnemonic keygen on [`SecretKey::new_from_mnemonic`]
+#[cfg(feature = "std")]
 #[doc(no_inline)]
 pub use coins_bip32;
 
