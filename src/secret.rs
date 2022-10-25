@@ -222,7 +222,7 @@ mod use_std {
 
             secret
                 .is_in_field()
-                .then(|| secret)
+                .then_some(secret)
                 .ok_or(Error::InvalidSecretKey)
         }
     }
