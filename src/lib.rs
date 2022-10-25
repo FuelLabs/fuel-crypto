@@ -17,6 +17,10 @@ pub use fuel_types;
 #[doc(no_inline)]
 /// Required export to use randomness features
 pub use rand;
+#[doc(no_inline)]
+pub use coins_bip39;
+#[doc(no_inline)]
+pub use coins_bip32;
 
 mod error;
 mod hasher;
