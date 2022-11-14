@@ -140,6 +140,19 @@ mod use_alloc {
         }
     }
 
+    impl TryFrom<Bytes64> for PublicKey {
+        type Error = Error;
+
+        fn try_from(b: Bytes64) -> Result<Self, Self::Error> {
+            let public = PublicKey(b);
+
+            public
+                .is_in_curve()
+                .then_some(public)
+                .ok_or(Error::InvalidPublicKey)
+        }
+    }
+
     impl TryFrom<&[u8]> for PublicKey {
         type Error = Error;
 
