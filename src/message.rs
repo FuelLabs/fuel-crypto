@@ -29,7 +29,7 @@ impl Message {
     ///
     /// There is no guarantee the provided bytes will be the product of a cryptographically secure
     /// hash. Using insecure messages might compromise the security of the signature.
-    pub unsafe fn from_bytes_unchecked(bytes: [u8; Self::LEN]) -> Self {
+    pub fn from_bytes_unchecked(bytes: [u8; Self::LEN]) -> Self {
         Self(bytes.into())
     }
 
@@ -86,14 +86,14 @@ impl From<Message> for [u8; Message::LEN] {
 impl From<&Hasher> for Message {
     fn from(hasher: &Hasher) -> Self {
         // Safety: `Hasher` is a cryptographic hash
-        unsafe { Self::from_bytes_unchecked(*hasher.digest()) }
+        Self::from_bytes_unchecked(*hasher.digest())
     }
 }
 
 impl From<Hasher> for Message {
     fn from(hasher: Hasher) -> Self {
         // Safety: `Hasher` is a cryptographic hash
-        unsafe { Self::from_bytes_unchecked(*hasher.finalize()) }
+        Self::from_bytes_unchecked(*hasher.finalize())
     }
 }
 
