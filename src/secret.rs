@@ -99,15 +99,28 @@ impl fmt::Display for SecretKey {
     }
 }
 
+#[cfg(feature = "alloc")]
+mod use_alloc {
+    use super::*;
+    use core::borrow::Borrow;
+    use secp256k1::SecretKey as Secp256k1SecretKey;
+    impl Borrow<Secp256k1SecretKey> for SecretKey {
+        fn borrow(&self) -> &Secp256k1SecretKey {
+            // Safety: field checked. The memory representation of the secp256k1 key is
+            // `[u8; 32]`
+            unsafe { &*(self.as_ref().as_ptr() as *const Secp256k1SecretKey) }
+        }
+    }
+}
+
 #[cfg(feature = "std")]
 mod use_std {
     use super::*;
     use crate::{Error, PublicKey};
     use coins_bip32::path::DerivationPath;
     use coins_bip39::{English, Mnemonic};
-    use core::borrow::Borrow;
     use core::str;
-    use secp256k1::{Error as Secp256k1Error, SecretKey as Secp256k1SecretKey};
+    use secp256k1::Error as Secp256k1Error;
     use std::str::FromStr;
 
     #[cfg(feature = "random")]
@@ -244,14 +257,6 @@ mod use_std {
             Bytes32::from_str(s)
                 .map_err(|_| Secp256k1Error::InvalidSecretKey.into())
                 .and_then(SecretKey::try_from)
-        }
-    }
-
-    impl Borrow<Secp256k1SecretKey> for SecretKey {
-        fn borrow(&self) -> &Secp256k1SecretKey {
-            // Safety: field checked. The memory representation of the secp256k1 key is
-            // `[u8; 32]`
-            unsafe { &*(self.as_ref().as_ptr() as *const Secp256k1SecretKey) }
         }
     }
 

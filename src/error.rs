@@ -44,12 +44,11 @@ impl From<Infallible> for Error {
     }
 }
 
-#[cfg(feature = "std")]
-mod use_std {
+#[cfg(feature = "alloc")]
+mod use_alloc {
     use super::*;
     use coins_bip39::MnemonicError;
     use secp256k1::Error as Secp256k1Error;
-    use std::{error, fmt, io};
 
     impl From<Secp256k1Error> for Error {
         fn from(secp: Secp256k1Error) -> Self {
@@ -74,6 +73,12 @@ mod use_std {
             Self::InvalidMnemonic
         }
     }
+}
+
+#[cfg(feature = "std")]
+mod use_std {
+    use super::*;
+    use std::{error, fmt, io};
 
     impl From<coins_bip32::Bip32Error> for Error {
         fn from(_: coins_bip32::Bip32Error) -> Self {

@@ -2,8 +2,7 @@ use crate::Hasher;
 
 use fuel_types::{Bytes32, Bytes64};
 
-use core::fmt;
-use core::ops::Deref;
+use core::{fmt, ops::Deref};
 
 /// Asymmetric public key
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -62,66 +61,14 @@ impl PublicKey {
     }
 }
 
-impl Deref for PublicKey {
-    type Target = [u8; PublicKey::LEN];
-
-    fn deref(&self) -> &[u8; PublicKey::LEN] {
-        self.0.deref()
-    }
-}
-
-impl AsRef<[u8]> for PublicKey {
-    fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-}
-
-impl AsMut<[u8]> for PublicKey {
-    fn as_mut(&mut self) -> &mut [u8] {
-        self.0.as_mut()
-    }
-}
-
-impl From<PublicKey> for [u8; PublicKey::LEN] {
-    fn from(pk: PublicKey) -> [u8; PublicKey::LEN] {
-        pk.0.into()
-    }
-}
-
-impl fmt::LowerHex for PublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl fmt::UpperHex for PublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl fmt::Debug for PublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl fmt::Display for PublicKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-#[cfg(feature = "std")]
-mod use_std {
+#[cfg(feature = "alloc")]
+mod use_alloc {
     use super::*;
     use crate::{Error, SecretKey};
 
     use secp256k1::{Error as Secp256k1Error, PublicKey as Secp256k1PublicKey, Secp256k1};
 
-    use core::borrow::Borrow;
-    use core::str;
-
+    use core::{borrow::Borrow, str};
     const UNCOMPRESSED_PUBLIC_KEY_SIZE: usize = 65;
 
     // Internal secp256k1 identifier for uncompressed point
@@ -238,5 +185,68 @@ mod use_std {
                 .map_err(|_| Secp256k1Error::InvalidPublicKey.into())
                 .and_then(PublicKey::try_from)
         }
+    }
+
+    impl TryFrom<Bytes64> for PublicKey {
+        type Error = Error;
+
+        fn try_from(b: Bytes64) -> Result<Self, Self::Error> {
+            let public = PublicKey(b);
+
+            public
+                .is_in_curve()
+                .then(|| public)
+                .ok_or(Error::InvalidPublicKey)
+        }
+    }
+}
+
+impl Deref for PublicKey {
+    type Target = [u8; PublicKey::LEN];
+
+    fn deref(&self) -> &[u8; PublicKey::LEN] {
+        self.0.deref()
+    }
+}
+
+impl AsRef<[u8]> for PublicKey {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
+impl AsMut<[u8]> for PublicKey {
+    fn as_mut(&mut self) -> &mut [u8] {
+        self.0.as_mut()
+    }
+}
+
+impl From<PublicKey> for [u8; PublicKey::LEN] {
+    fn from(pk: PublicKey) -> [u8; PublicKey::LEN] {
+        pk.0.into()
+    }
+}
+
+impl fmt::LowerHex for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl fmt::UpperHex for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl fmt::Debug for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl fmt::Display for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(f)
     }
 }
